@@ -1,0 +1,8 @@
+.git/**
+.test-output/**
+dist/**
+test/**
+scripts/**
+.vscode/**
+*.vsix
+.env*
