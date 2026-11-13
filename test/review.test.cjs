@@ -177,6 +177,17 @@ test('whole-file staging saves the target before refreshing or touching the inde
   ]);
 });
 
+test('a deleted file in a readonly Git text editor stages its working path and advances without saving the virtual document', async () => {
+  const state = fixture({ changes: [change('a.txt', 6), change('b.txt')] });
+  state.document.uri = gitUri('a.txt', 'HEAD');
+  state.document.save = async () => { assert.fail('A deleted Git document must never be saved'); };
+  state.vscode.window.tabGroups.activeTabGroup.activeTab.input = { uri: state.document.uri };
+  await stageAndNext(state.vscode, state.api);
+  assert.deepEqual(state.calls, [
+    ['status'], ['add', uri('a.txt').fsPath], ['status'], ['git.openChange', uri('b.txt').fsPath]
+  ]);
+});
+
 test('a failed stage never opens another file', async () => {
   const state = fixture();
   state.repository.add = async paths => { state.calls.push(['add', ...paths]); throw new Error('index is locked'); };

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.7
+
+- Support the review shortcut in read-only Git documents, including deleted files opened directly from Source Control or reached while advancing.
+- Stage deletions and open the next change instead of letting a printable shortcut trigger VS Code's read-only editor message.
+
 ## 0.1.6
 
 - Keep the review shortcut active in plain text tabs opened by the action, including untracked files and staged-file views.

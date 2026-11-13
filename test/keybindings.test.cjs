@@ -68,6 +68,7 @@ const viewOrders = [
 ];
 const plainEditor = {
   activeEditor: 'workbench.editors.text', resourceLangId: 'markdown',
+  resourceScheme: 'file',
   editorAreaFocus: true, editorTextFocus: true, inputFocus: true, isInDiffEditor: false
 };
 const activeBindings = context => bindings.filter(binding => matches(binding.when, { ...enabled, ...context }));
@@ -91,6 +92,21 @@ test('stage shortcuts remain available in diffs, reviewed plain files, an empty 
     ]) {
       assert.ok(activeBindings({ ...context, ...order }).length > 0, JSON.stringify({ context, order }));
     }
+  }
+});
+
+test('a readonly Git file can start review without a diff or an existing review marker', () => {
+  for (const order of viewOrders) {
+    const deleted = { ...plainEditor, ...order, resourceScheme: 'git', editorReadonly: true,
+      isInDiffEditor: false, 'stageAndNext.reviewEditor': false };
+    assert.ok(activeBindings(deleted).length > 0, JSON.stringify(order));
+    for (const excluded of [
+      { editorAreaFocus: false },
+      { editorTextFocus: false },
+      { terminalFocus: true },
+      { 'config.stageAndNext.enabled': false },
+      { 'config.git.enabled': false }
+    ]) assert.equal(activeBindings({ ...deleted, ...excluded }).length, 0, JSON.stringify({ order, excluded }));
   }
 });
 
@@ -122,6 +138,7 @@ test('disabling Stage and Next releases every contributed stage shortcut', () =>
       for (const context of [
         { ...plainEditor, isInDiffEditor: true },
         { ...plainEditor, 'stageAndNext.reviewEditor': true },
+        { ...plainEditor, resourceScheme: 'git', editorReadonly: true },
         { editorAreaFocus: true },
         { focusedView: 'workbench.scm', listFocus: true }
       ]) assert.equal(matches(binding.when, { ...enabled, ...context, ...order, 'config.stageAndNext.enabled': false }), false);

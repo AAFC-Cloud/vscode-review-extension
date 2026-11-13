@@ -133,7 +133,8 @@ async function dispatchKeyboard(debugPort, type) {
         const focusedRow = document.getElementById(element?.getAttribute('aria-activedescendant'));
         return { element: element?.tagName, classes: element?.className,
           row: focusedRow?.getAttribute('aria-label') || focusedRow?.textContent,
-          expanded: focusedRow?.getAttribute('aria-expanded') };
+          expanded: focusedRow?.getAttribute('aria-expanded'),
+          editorMessages: Array.from(document.querySelectorAll('.monaco-editor-overlaymessage'), item => item.textContent || '') };
       })())`,
       returnByValue: true,
     });

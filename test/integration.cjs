@@ -100,6 +100,24 @@ async function run() {
       await pause(150);
     }
 
+    async function expectDeleted(name) {
+      await until(() => activeName() === name && vscode.window.activeTextEditor?.document.uri.scheme === 'git',
+        `The deleted file ${name} did not open as a Git document.`);
+      const tab = vscode.window.tabGroups.activeTabGroup.activeTab;
+      assert.ok(tab.input instanceof vscode.TabInputText, 'Git opens deleted files as standalone readonly text documents.');
+      assert.equal(JSON.parse(tab.input.uri.query).ref, 'HEAD');
+      const editor = vscode.window.activeTextEditor;
+      editor.selection = new vscode.Selection(0, 0, 0, 0);
+      await pause(150);
+      return editor;
+    }
+
+    async function expectNoReadonlyMessage() {
+      const focus = await nativeKeyboard('inspect');
+      assert.ok(!focus.editorMessages.some(message => /read.only/i.test(message)),
+        'The review shortcut must not fall through to a readonly-editor typing message.');
+    }
+
     async function expectStaged(name, tab = undefined) {
       if (!tab) {
         await until(() => {
@@ -135,6 +153,24 @@ async function run() {
       assert.equal(tab.isPreview, false, `The staged diff ${name} is pinned.`);
       if (tab === vscode.window.tabGroups.activeTabGroup.activeTab) await pause(150);
     }
+
+    // Start review from an ordinary Git deletion, before any tab has been
+    // marked by this extension. This matches opening a deleted SCM file directly.
+    write('b-next.txt', 'next changed\n');
+    fs.unlinkSync(uri('d-deleted.txt').fsPath);
+    await repository.status();
+    await vscode.commands.executeCommand('git.openChange', uri('d-deleted.txt'));
+    const directDeleted = await expectDeleted('d-deleted.txt');
+    const directDeletedContent = directDeleted.document.getText();
+    await nativeKeyboard('backtick');
+    await expectNext('b-next.txt');
+    assert.equal(git('diff', '--cached', '--name-status', '--', 'd-deleted.txt').trim(), 'D\td-deleted.txt');
+    assert.equal(fs.existsSync(uri('d-deleted.txt').fsPath), false, 'Staging a deletion never recreates the working file.');
+    assert.equal(directDeleted.document.getText(), directDeletedContent, 'The readonly document is never modified.');
+    await expectNoReadonlyMessage();
+    checks.push('A backtick in a directly opened readonly deleted file stages its deletion and advances without a readonly message');
+    await vscode.commands.executeCommand('workbench.action.closeAllEditors');
+    git('reset', '--hard', 'HEAD');
 
     write('a-whole.txt', 'whole changed\n');
     write('b-next.txt', 'next changed\n');
@@ -177,15 +213,6 @@ async function run() {
     await expectNext('b-next.txt');
     checks.push('A partially staged file can subsequently be staged in full and advance');
 
-    fs.unlinkSync(uri('d-deleted.txt').fsPath);
-    await repository.status();
-    await vscode.commands.executeCommand('git.openChange', uri('d-deleted.txt'));
-    await until(() => activeName() === 'd-deleted.txt', 'Deleted file diff did not open.');
-    await vscode.commands.executeCommand(command);
-    assert.equal(git('diff', '--cached', '--name-status', '--', 'd-deleted.txt').trim(), 'D\td-deleted.txt');
-    await expectNext('b-next.txt');
-    checks.push('Deleted files are staged and the next unstaged diff is focused');
-
     write('e-untracked.txt', 'new file content\n');
     await repository.status();
     // Native Git opens untracked files as ordinary editors rather than diffs.
@@ -205,6 +232,35 @@ async function run() {
     await repository.status();
     assert.equal(repository.state.workingTreeChanges.length + repository.state.untrackedChanges.length, 0);
     checks.push('A plain text editor stages its file and handles an empty remaining Changes list');
+
+    for (const closeDiffOnOperation of [false, true]) {
+      await vscode.commands.executeCommand('workbench.action.closeAllEditors');
+      git('reset', '--hard', 'HEAD');
+      await vscode.workspace.getConfiguration('git').update('closeDiffOnOperation', closeDiffOnOperation,
+        vscode.ConfigurationTarget.Global);
+      write('a-whole.txt', 'whole changed\n');
+      fs.unlinkSync(uri('b-next.txt').fsPath);
+      write('d-deleted.txt', 'successor changed\n');
+      await repository.status();
+      await setListSort('name');
+      await openDiff('a-whole.txt');
+      await nativeKeyboard('backtick');
+      const reviewedDeletion = await expectDeleted('b-next.txt');
+      assert.equal(git('diff', '--cached', '--name-only').trim(), 'a-whole.txt');
+      const deletedContent = reviewedDeletion.document.getText();
+      await nativeKeyboard('backtick');
+      await expectNext('d-deleted.txt');
+      assert.equal(git('diff', '--cached', '--name-status', '--', 'b-next.txt').trim(), 'D\tb-next.txt');
+      assert.equal(git('diff', '--cached', '--', 'd-deleted.txt'), '', 'The visible successor stays unstaged.');
+      assert.equal(fs.existsSync(uri('b-next.txt').fsPath), false);
+      assert.equal(reviewedDeletion.document.getText(), deletedContent);
+      await expectNoReadonlyMessage();
+      checks.push(`Consecutive backticks stage a modified file then a deleted file and open its visible successor with git.closeDiffOnOperation=${closeDiffOnOperation}`);
+    }
+    await vscode.commands.executeCommand('workbench.action.closeAllEditors');
+    git('reset', '--hard', 'HEAD');
+    await vscode.workspace.getConfiguration('git').update('closeDiffOnOperation', false,
+      vscode.ConfigurationTarget.Global);
 
     async function scmFixture() {
       await vscode.commands.executeCommand('workbench.action.closeAllEditors');

@@ -15,11 +15,12 @@ Press **Ctrl+Alt+S** on Windows/Linux or **Cmd+Option+S** on macOS:
 
 - With selected text in the modified side of a diff, run VS Code's **Git: Stage Selected Ranges** and stay on the file. Multiple selections are supported.
 - With empty selections in a diff, save and stage the current file, then open the next unstaged file in the same repository.
+- With an empty selection in a deleted file's read-only Git view, stage its deletion and open the next unstaged file.
 - When the action opens an untracked file as a plain text editor, keep using the same shortcut to stage it and continue reviewing.
 - With a file row focused in Source Control's **Changes** or **Untracked Changes**, stage that file and open the next one. Selections left in an inactive editor do not affect this action.
 - With all editors closed, open the first unstaged change without staging anything. Prefer the selected Source Control repository, then another open repository with changes.
 
-The shortcut leaves text editors opened outside the review action alone, so character bindings such as backtick type normally in Markdown and other files. Plain text tabs opened by the review action stay part of the review, including untracked files and staged-file views. Use **Stage and Next: Toggle Enabled** when you want to type the shortcut character in a review tab. Closing a review tab and reopening the file normally returns it to ordinary editing.
+The shortcut leaves ordinary editable text files opened outside the review action alone, so character bindings such as backtick type normally in Markdown and other files. Read-only Git views also support the shortcut, including deleted files opened directly from Source Control. Plain text tabs opened by the review action stay part of the review, including untracked files and staged-file views. Use **Stage and Next: Toggle Enabled** when you want to type the shortcut character in a review tab. Closing an editable review tab and reopening the file normally returns it to ordinary editing.
 
 You can also run **Stage and Next: Stage Selection or File and Open Next Change** from the Command Palette or a changed file's Source Control context menu. Explicit commands also support ordinary text editors.
 
@@ -35,7 +36,7 @@ Selected ranges use VS Code's own Git behavior, including its handling of line b
 
 Open **Preferences: Open Keyboard Shortcuts**, search for `@command:review.stageAndNext`, and assign your shortcut to its existing entries. There are separate entries for diff editors and review-opened text tabs, Source Control, opening a change when all editors are closed, and each view/sort choice. Keep their `when` conditions and `args`: these pass the live view order and make the focused Source Control row take precedence over an inactive editor selection. The opening-only entries use `source: "browse"` and avoid intercepting text inputs, terminals, and Quick Open.
 
-For existing custom bindings, include `config.stageAndNext.enabled` in every `when` condition so the toggle releases the key. Editor bindings also need `editorAreaFocus && (isInDiffEditor || stageAndNext.reviewEditor) && editorTextFocus`; opening-only bindings need `!activeEditor` and the existing input-focus exclusions. User bindings override extension defaults and must be updated separately.
+For existing custom bindings, include `config.stageAndNext.enabled` in every `when` condition so the toggle releases the key. Editor bindings also need `editorAreaFocus && (isInDiffEditor || stageAndNext.reviewEditor || resourceScheme == git) && editorTextFocus`; opening-only bindings need `!activeEditor` and the existing input-focus exclusions. User bindings override extension defaults and must be updated separately.
 
 If you previously added a custom binding for version 0.1.0, update it from the new extension defaults so it also passes `viewOrder`. A direct call to `review.stageAndNext` without `viewOrder` uses `scm.defaultViewMode` and `scm.defaultViewSortKey`; toolbar overrides are passed by the extension's shortcuts and menu entries. The Command Palette shows one action matching the current view order.
 
@@ -47,7 +48,7 @@ Requires Node.js 22 or newer and desktop VS Code 1.96 or newer with its built-in
 npm test
 npm run test:integration
 npm run package
-code-insiders --install-extension ./dist/stage-and-next-0.1.6.vsix --force
+code-insiders --install-extension ./dist/stage-and-next-0.1.7.vsix --force
 ```
 
 `node scripts/package.cjs` also works directly without npm. The packager includes only the manifest, runtime source, English and French READMEs and licences, changelog, third-party notices, and project logo. Press F5 in this folder to launch an Extension Development Host. The native integration tests launch an isolated VS Code profile and disposable Git repository; set `VS_CODE_EXE` if VS Code is installed at a different location.

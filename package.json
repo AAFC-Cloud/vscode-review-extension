@@ -2,7 +2,7 @@
   "name": "stage-and-next",
   "displayName": "Stage and Next",
   "description": "One shortcut to stage selected Git changes, or stage the active file and open the next unstaged file.",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "publisher": "review-tools",
   "license": "LiLiQ-R-1.1",
   "engines": {
@@ -143,7 +143,7 @@
         "command": "review.stageAndNext",
         "key": "ctrl+alt+s",
         "mac": "cmd+alt+s",
-        "when": "editorAreaFocus && config.stageAndNext.enabled && (isInDiffEditor || stageAndNext.reviewEditor) && editorTextFocus && !terminalFocus && config.git.enabled && gitOpenRepositoryCount != 0 && !scmViewMode"
+        "when": "editorAreaFocus && config.stageAndNext.enabled && (isInDiffEditor || stageAndNext.reviewEditor || resourceScheme == git) && editorTextFocus && !terminalFocus && config.git.enabled && gitOpenRepositoryCount != 0 && !scmViewMode"
       },
       {
         "command": "review.stageAndNext",
@@ -164,7 +164,7 @@
             "sortKey": "name"
           }
         },
-        "when": "editorAreaFocus && config.stageAndNext.enabled && (isInDiffEditor || stageAndNext.reviewEditor) && editorTextFocus && !terminalFocus && config.git.enabled && gitOpenRepositoryCount != 0 && scmViewMode == list && scmViewSortKey == name"
+        "when": "editorAreaFocus && config.stageAndNext.enabled && (isInDiffEditor || stageAndNext.reviewEditor || resourceScheme == git) && editorTextFocus && !terminalFocus && config.git.enabled && gitOpenRepositoryCount != 0 && scmViewMode == list && scmViewSortKey == name"
       },
       {
         "command": "review.stageAndNext",
@@ -189,7 +189,7 @@
             "sortKey": "path"
           }
         },
-        "when": "editorAreaFocus && config.stageAndNext.enabled && (isInDiffEditor || stageAndNext.reviewEditor) && editorTextFocus && !terminalFocus && config.git.enabled && gitOpenRepositoryCount != 0 && scmViewMode == list && scmViewSortKey == path"
+        "when": "editorAreaFocus && config.stageAndNext.enabled && (isInDiffEditor || stageAndNext.reviewEditor || resourceScheme == git) && editorTextFocus && !terminalFocus && config.git.enabled && gitOpenRepositoryCount != 0 && scmViewMode == list && scmViewSortKey == path"
       },
       {
         "command": "review.stageAndNext",
@@ -214,7 +214,7 @@
             "sortKey": "status"
           }
         },
-        "when": "editorAreaFocus && config.stageAndNext.enabled && (isInDiffEditor || stageAndNext.reviewEditor) && editorTextFocus && !terminalFocus && config.git.enabled && gitOpenRepositoryCount != 0 && scmViewMode == list && scmViewSortKey == status"
+        "when": "editorAreaFocus && config.stageAndNext.enabled && (isInDiffEditor || stageAndNext.reviewEditor || resourceScheme == git) && editorTextFocus && !terminalFocus && config.git.enabled && gitOpenRepositoryCount != 0 && scmViewMode == list && scmViewSortKey == status"
       },
       {
         "command": "review.stageAndNext",
@@ -239,7 +239,7 @@
             "sortKey": "path"
           }
         },
-        "when": "editorAreaFocus && config.stageAndNext.enabled && (isInDiffEditor || stageAndNext.reviewEditor) && editorTextFocus && !terminalFocus && config.git.enabled && gitOpenRepositoryCount != 0 && scmViewMode == tree"
+        "when": "editorAreaFocus && config.stageAndNext.enabled && (isInDiffEditor || stageAndNext.reviewEditor || resourceScheme == git) && editorTextFocus && !terminalFocus && config.git.enabled && gitOpenRepositoryCount != 0 && scmViewMode == tree"
       },
       {
         "command": "review.stageAndNext",
